@@ -5,9 +5,10 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import com.mojang.math.Transformation;
 import net.minecraft.world.entity.Display.ItemDisplay;
 import net.minecraft.world.entity.Entity;
@@ -16,12 +17,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public class BottleDisplayMod implements ModInitializer {
+    public static final String MOD_ID = "bottledisplay";
     public static final String TAG = "bottle_display";
 
     @Override
@@ -49,7 +52,7 @@ public class BottleDisplayMod implements ModInitializer {
         if (player.distanceToSqr(Vec3.atCenterOf(target)) > 36.0) return;
 
         AABB scan = new AABB(target);
-        long count = level.getEntitiesOfClass(ItemDisplay.class, scan, e -> e.getTags().contains(TAG)).size();
+        long count = level.getEntitiesOfClass(ItemDisplay.class, scan, e -> e.getScoreboardTags().contains(TAG)).size();
         if (count >= 4) return;
 
         double[][] offsets = {
@@ -62,7 +65,10 @@ public class BottleDisplayMod implements ModInitializer {
         double ox = offsets[(int) count][0];
         double oz = offsets[(int) count][1];
 
-        ItemDisplay display = EntityType.ITEM_DISPLAY.create(level, EntitySpawnReason.TRIGGERED);
+        EntityType<ItemDisplay> type = (EntityType<ItemDisplay>) BuiltInRegistries.ENTITY_TYPE.getValue(ResourceLocation.withDefaultNamespace("item_display"));
+        if (type == null) return;
+
+        ItemDisplay display = type.create(level, EntitySpawnReason.TRIGGERED);
         if (display == null) return;
 
         display.setPos(target.getX() + 0.5 + ox, target.getY() + 1.0, target.getZ() + 0.5 + oz);
@@ -86,13 +92,20 @@ public class BottleDisplayMod implements ModInitializer {
     }
 
     public static void removeBottle(Entity entity) {
-        if (!(entity instanceof ItemDisplay display) || !display.getTags().contains(TAG)) return;
+        removeAndGive(entity, null);
+    }
+
+    public static void removeAndGive(Entity entity, ServerPlayer player) {
+        if (!(entity instanceof ItemDisplay display) || !display.getScoreboardTags().contains(TAG)) return;
 
         if (entity.level() instanceof ServerLevel level) {
             ItemStack stack = display.getItemStack();
             if (!stack.isEmpty()) {
-                BlockPos pos = display.blockPosition();
-                BlockPos.popResource(level, pos, stack);
+                if (player != null && !player.getInventory().add(stack)) {
+                    Block.popResource(level, display.blockPosition(), stack);
+                } else if (player == null) {
+                    Block.popResource(level, display.blockPosition(), stack);
+                }
             }
             display.discard();
         }
