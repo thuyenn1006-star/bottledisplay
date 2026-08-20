@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "bottledisplay",
+  "version": "${version}",
+  "name": "Bottle Display",
+  "description": "Place vanilla bottles and potions on blocks as small display objects.",
+  "authors": [
+    "Nam + GPT-5.6 Luna"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.nam.bottledisplay.BottleDisplayMod"
+    ],
+    "client": [
+      "com.nam.bottledisplay.client.BottleDisplayClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "mixins": [
+    "bottledisplay.mixins.json",
+    {
+      "config": "bottledisplay.client.mixins.json",
+      "environment": "client"
+    }
+  ]
+}
