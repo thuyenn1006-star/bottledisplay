@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.util.math.AffineTransformation;
+import net.minecraft.util.math.Transformation;
 import net.minecraft.world.entity.Display.ItemDisplay;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -49,10 +49,10 @@ public final class BottleDisplayMod implements ModInitializer {
         BlockPos target = p.pos();
         if (!level.isLoaded(target)) return;
         if (!level.getBlockState(target).isCollisionShapeFullBlock(level, target)) return;
-        if (player.distanceToSqr(target.getCenter()) > 36.0) return;
+        if (player.distanceToSqr(target.toCenterPos()) > 36.0) return;
 
         AABB scan = new AABB(target);
-        long count = level.getEntitiesOfClass(ItemDisplay.class, scan, e -> e.getTags().contains(TAG)).size();
+        long count = level.getEntitiesOfClass(ItemDisplay.class, scan, e -> e.getcommandTags().contains(TAG)).size();
         if (count >= 4) return;
 
         double[][] offsets = {
@@ -73,7 +73,7 @@ public final class BottleDisplayMod implements ModInitializer {
         display.addTag(TAG);
         display.addTag(TAG + "_block_" + target.asLong());
         display.setTransformation(transform(p.yawQuarter(), p.lying()));
-        display.setInterpolationDuration(0);
+        display.setTransformationInterpolationDuration(0);
         level.addFreshEntity(display);
 
         if (!player.getAbilities().instabuild) player.getMainHandItem().shrink(1);
@@ -87,7 +87,7 @@ public final class BottleDisplayMod implements ModInitializer {
     }
 
     public static void removeAndGive(Entity entity, ServerPlayer player) {
-        if (!(entity instanceof ItemDisplay display) || !display.getTags().contains(TAG)) return;
+        if (!(entity instanceof ItemDisplay display) || !display..contains(TAG)) return;
         ItemStack stack = display.getItemStack().copy();
         display.discard();
         if (!stack.isEmpty() && !player.getInventory().add(stack)) player.drop(stack, false);
