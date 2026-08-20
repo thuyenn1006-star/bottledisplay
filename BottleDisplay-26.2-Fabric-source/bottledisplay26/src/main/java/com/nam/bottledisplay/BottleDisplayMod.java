@@ -87,7 +87,7 @@ public final class BottleDisplayMod implements ModInitializer {
     }
 
     public static void removeAndGive(Entity entity, ServerPlayer player) {
-        if (!(entity instanceof ItemDisplay display) || !display..contains(TAG)) return;
+        if (!(entity instanceof ItemDisplay display) || !display.getCommandTags().contains(TAG)) return;
         ItemStack stack = display.getItemStack().copy();
         display.discard();
         if (!stack.isEmpty() && !player.getInventory().add(stack)) player.drop(stack, false);
